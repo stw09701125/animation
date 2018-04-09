@@ -238,7 +238,22 @@ void GoalNet::AddForceField(const Vector3d &a_kForce)
 void GoalNet::ComputeInternalForce()
 {
     //TO DO 2
-	
+	for (auto& c : m_Springs)
+	{
+		int startID = c.GetSpringStartID();
+		int endID = c.GetSpringEndID();
+		Vector3d PosS = GetParticle(startID).GetPosition();
+		Vector3d VelS = GetParticle(startID).GetVelocity();
+		Vector3d PosE = GetParticle(endID).GetPosition();
+		Vector3d VelE = GetParticle(endID).GetVelocity();
+
+		Vector3d ForceS = ComputeSpringForce(PosS, PosE, c.GetSpringCoef(), c.GetSpringRestLength()) \
+						+ ComputeDamperForce(PosS, PosE, VelS, VelE, c.GetDamperCoef());
+		Vector3d ForceE = -ForceS;
+
+		GetParticle(startID).AddForce(ForceS);
+		GetParticle(endID).AddForce(ForceE);
+	}
 }
 
 /*
