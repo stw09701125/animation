@@ -238,6 +238,7 @@ void GoalNet::AddForceField(const Vector3d &a_kForce)
 void GoalNet::ComputeInternalForce()
 {
     //TO DO 2
+	
 }
 
 /*
@@ -330,6 +331,10 @@ Vector3d GoalNet::ComputeSpringForce(
     )
 {
     //TO DO 3
+	Vector3d displacement = a_crPos1 - a_crPos2;
+	double lengthD = displacement.Length();
+	Vector3d sForce = (-a_cdSpringCoef) * (lengthD - a_cdRestLength) * (displacement / lengthD);
+	return sForce;
 }
 
 Vector3d GoalNet::ComputeDamperForce(
@@ -341,6 +346,12 @@ Vector3d GoalNet::ComputeDamperForce(
     )
 {
     //TO DO 4
+	Vector3d displacement = a_crPos1 - a_crPos2;
+	double lengthD = displacement.Length();
+	Vector3d unitDirection = displacement / lengthD;
+	double deltaV = (a_crVel1 - a_crVel2).DotProduct(unitDirection);
+	Vector3d dForce = (-a_cdDamperCoef) * deltaV * unitDirection;
+	return dForce;
 }
 
 void GoalNet::UpdateSpringCoef(
