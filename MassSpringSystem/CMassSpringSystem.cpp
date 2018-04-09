@@ -529,7 +529,16 @@ void CMassSpringSystem::ExplicitEuler()
     for (int pIdx = 0; pIdx < m_GoalNet.ParticleNum(); ++pIdx)
     {
         //TO DO 6
-    }
+		Vector3d Vel = (m_GoalNet.GetParticle(pIdx)).GetVelocity();
+		Vector3d Force = (m_GoalNet.GetParticle(pIdx)).GetForce();
+		Vector3d Position = (m_GoalNet.GetParticle(pIdx)).GetPosition();
+		double Mass = (m_GoalNet.GetParticle(pIdx)).GetMass();
+		//Update Position
+		(m_GoalNet.GetParticle(pIdx)).SetPosition(Position + m_dDeltaT * Vel);
+		//Update Velocity
+		Vector3d deltaVel = (m_GoalNet.GetParticle(pIdx)).GetForce() / Mass * m_dDeltaT;
+		(m_GoalNet.GetParticle(pIdx)).SetVelocity(Vel + deltaVel);
+	}
 
     // Balls
     for (int ballIdx = 0; ballIdx < BallNum(); ++ballIdx)
