@@ -427,6 +427,7 @@ void CMassSpringSystem::ResetAllForce()
     {
         //TO DO 6
         m_GoalNet.GetParticle(pIdx).SetAcceleration(Vector3d::ZERO);
+		//m_GoalNet.GetParticle(pIdx).SetForce(Vector3d::ZERO);
     }
 
     for (int ballIdx = 0; ballIdx < BallNum(); ++ballIdx)
@@ -470,7 +471,30 @@ void CMassSpringSystem::NetPlaneCollision()
     static const double eEPSILON = 0.01;
     double resistCoef = 0.5;
     double frictionCoef = 0.3;
-   
+	Vector3d normalF(0.0, 1.0, 0.0);
+	Vector3d zero(0.0, -1.0, 0.0);
+	for (int pIdx = 0; pIdx < m_GoalNet.ParticleNum(); ++pIdx)
+	{
+		Vector3d Vel = (m_GoalNet.GetParticle(pIdx)).GetVelocity();
+		Vector3d Force = (m_GoalNet.GetParticle(pIdx)).GetForce();
+		Vector3d Position = (m_GoalNet.GetParticle(pIdx)).GetPosition();
+		// Collision Occurred
+		double Nxp = normalF.DotProduct(Position - zero);
+		double Nv = normalF.DotProduct(Vel);
+		double Nf = normalF.DotProduct(Force);
+		if (Nxp < eEPSILON && Nv < eEPSILON)
+		{
+			if (Nv < 0)
+			{
+				Vector3d Vn = Nv * normalF;
+				(m_GoalNet.GetParticle(pIdx)).SetVelocity(-resistCoef * Vn + (Vel - Vn));
+			}
+			if (Nf < 0)
+			{
+				(m_GoalNet.GetParticle(pIdx)).AddForce((-Nf * normalF) + (frictionCoef * Nf * Vel));
+			}
+		}
+	}
 }
 
 void CMassSpringSystem::BallPlaneCollision()
