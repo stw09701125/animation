@@ -501,21 +501,92 @@ void CMassSpringSystem::BallPlaneCollision()
 {
     //TO DO 2
     static const double eEPSILON = 0.01;
-    double resistCoef = 0.5;
-    double frictionCoef = 0.3;
-   
+    double resistCoef = 0.01;
+    double frictionCoef = 0.8;
+	Vector3d normalF(0.0, 1.0, 0.0);
+	Vector3d zero(0.0, -0.75, 0.0);
+	for (int ballIdx = 0; ballIdx < BallNum(); ++ballIdx)
+	{
+		Vector3d Vel = m_Balls[ballIdx].GetVelocity();
+		Vector3d Force = m_Balls[ballIdx].GetForce();
+		Vector3d Position = m_Balls[ballIdx].GetPosition();
+		// Collision Occurred
+		double Nxp = normalF.DotProduct(Position - zero);
+		double Nv = normalF.DotProduct(Vel);
+		double Nf = normalF.DotProduct(Force);
+		if (Nxp < eEPSILON && Nv < eEPSILON)
+		{
+			if (Nv < 0)
+			{
+				Vector3d Vn = Nv * normalF;
+				m_Balls[ballIdx].SetVelocity(-resistCoef * Vn + (Vel - Vn));
+			}
+			if (Nf < 0)
+			{
+				m_Balls[ballIdx].AddForce((-Nf * normalF) + (frictionCoef * Nf * Vel));
+			}
+		}
+	}
 }
 
 void CMassSpringSystem::BallToBallCollision()
 {
     static const double eEPSILON = 0.01;
 	//TO DO 2
+	for (int ballAIdx = 0; ballAIdx < BallNum(); ++ballAIdx)
+	{
+		//Vector3d VelA = m_Balls[ballAIdx].GetVelocity();
+		//Vector3d ForceA = m_Balls[ballAIdx].GetForce();
+		Vector3d PositionA = m_Balls[ballAIdx].GetPosition();
+
+		for (int ballBIdx = 0; ballBIdx < BallNum(); ++ballBIdx)
+		{
+			if (ballBIdx != ballAIdx)
+			{
+				Vector3d PositionB = m_Balls[ballBIdx].GetPosition();
+				Vector3d collidePlane = PositionB - PositionA;
+				if (collidePlane.SquaredLength() < (eEPSILON + 0.7) * (eEPSILON + 0.7))
+				{
+					Vector3d VelA = m_Balls[ballAIdx].GetVelocity();
+					Vector3d VelB = m_Balls[ballBIdx].GetVelocity();
+					collidePlane /= collidePlane.Length(); //Normalize
+
+					Vector3d Va = VelA.DotProduct(collidePlane) * collidePlane;
+					Vector3d Vb = VelB.DotProduct(collidePlane) * collidePlane;
+					m_Balls[ballAIdx].SetVelocity(Vb + VelA - Va);
+					m_Balls[ballBIdx].SetVelocity(Va + VelB - Vb);
+				}
+			}
+		}
+	}
 }
 
 void CMassSpringSystem::BallNetCollision()
 {
     static const double eEPSILON = 0.01;
+	const double bMass = 1.0f;
+	const double pMass = m_GoalNet.GetParticle(0).GetMass();
 	//TO DO 2
+	for (int ballIdx = 0; ballIdx < BallNum(); ++ballIdx)
+	{
+		Vector3d bPos = m_Balls[ballIdx].GetPosition();
+		for (int pIdx = 0; pIdx < m_GoalNet.ParticleNum(); ++pIdx)
+		{
+			Vector3d pPos = m_GoalNet.GetParticle(pIdx).GetPosition();
+			Vector3d collidePlane = bPos - pPos;
+			if (collidePlane.SquaredLength() < (eEPSILON + 0.3) * (eEPSILON + 0.3))
+			{
+				Vector3d bVel = m_Balls[ballIdx].GetVelocity();
+				Vector3d pVel = (m_GoalNet.GetParticle(pIdx)).GetVelocity();
+				collidePlane /= collidePlane.Length();
+
+				Vector3d ballV = bVel.DotProduct(collidePlane) * collidePlane;
+				Vector3d partV = pVel.DotProduct(collidePlane) * collidePlane;
+				m_Balls[ballIdx].SetVelocity((ballV * (bMass - pMass) + 2 * pMass * partV) / (bMass + pMass) + (bVel - ballV));
+				m_GoalNet.GetParticle(pIdx).SetVelocity((partV * (pMass - bMass) + 2 * bMass * ballV) / (bMass + pMass) + (pVel - partV));
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -560,7 +631,7 @@ void CMassSpringSystem::ExplicitEuler()
 		//Update Position
 		(m_GoalNet.GetParticle(pIdx)).SetPosition(Position + m_dDeltaT * Vel);
 		//Update Velocity
-		Vector3d deltaVel = (m_GoalNet.GetParticle(pIdx)).GetForce() / Mass * m_dDeltaT;
+		Vector3d deltaVel = Force / Mass * m_dDeltaT;
 		(m_GoalNet.GetParticle(pIdx)).SetVelocity(Vel + deltaVel);
 	}
 
@@ -568,6 +639,15 @@ void CMassSpringSystem::ExplicitEuler()
     for (int ballIdx = 0; ballIdx < BallNum(); ++ballIdx)
     {
 		//TO DO 6
+		Vector3d Vel = m_Balls[ballIdx].GetVelocity();
+		Vector3d Force = m_Balls[ballIdx].GetForce();
+		Vector3d Position = m_Balls[ballIdx].GetPosition();
+		double Mass = m_Balls[ballIdx].GetMass();
+		//Update Position
+		m_Balls[ballIdx].SetPosition(Position + m_dDeltaT * Vel);
+		//Update Velocity
+		Vector3d deltaVel = Force / Mass * m_dDeltaT;
+		m_Balls[ballIdx].SetVelocity(Vel + deltaVel);
     }
 }
 
