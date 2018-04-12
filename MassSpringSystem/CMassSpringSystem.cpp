@@ -501,8 +501,8 @@ void CMassSpringSystem::BallPlaneCollision()
 {
     //TO DO 2
     static const double eEPSILON = 0.01;
-    double resistCoef = 0.01;
-    double frictionCoef = 0.8;
+    double resistCoef = 0.4;
+    double frictionCoef = 0.3;
 	Vector3d normalF(0.0, 1.0, 0.0);
 	Vector3d zero(0.0, -0.75, 0.0);
 	for (int ballIdx = 0; ballIdx < BallNum(); ++ballIdx)
@@ -577,13 +577,20 @@ void CMassSpringSystem::BallNetCollision()
 			if (collidePlane.SquaredLength() < (eEPSILON + 0.3) * (eEPSILON + 0.3))
 			{
 				Vector3d bVel = m_Balls[ballIdx].GetVelocity();
-				Vector3d pVel = (m_GoalNet.GetParticle(pIdx)).GetVelocity();
-				collidePlane /= collidePlane.Length();
+				if (m_GoalNet.GetParticle(pIdx).IsMovable())
+				{
+					Vector3d pVel = (m_GoalNet.GetParticle(pIdx)).GetVelocity();
+					collidePlane /= collidePlane.Length();
 
-				Vector3d ballV = bVel.DotProduct(collidePlane) * collidePlane;
-				Vector3d partV = pVel.DotProduct(collidePlane) * collidePlane;
-				m_Balls[ballIdx].SetVelocity((ballV * (bMass - pMass) + 2 * pMass * partV) / (bMass + pMass) + (bVel - ballV));
-				m_GoalNet.GetParticle(pIdx).SetVelocity((partV * (pMass - bMass) + 2 * bMass * ballV) / (bMass + pMass) + (pVel - partV));
+					Vector3d ballV = bVel.DotProduct(collidePlane) * collidePlane;
+					Vector3d partV = pVel.DotProduct(collidePlane) * collidePlane;
+					m_Balls[ballIdx].SetVelocity((ballV * (bMass - pMass) + 2 * pMass * partV) / (bMass + pMass) + (bVel - ballV));
+					m_GoalNet.GetParticle(pIdx).SetVelocity((partV * (pMass - bMass) + 2 * bMass * ballV) / (bMass + pMass) + (pVel - partV));
+				}
+				else
+				{
+					m_Balls[ballIdx].SetVelocity(-bVel);
+				}
 			}
 		}
 	}
@@ -632,6 +639,7 @@ void CMassSpringSystem::ExplicitEuler()
 		(m_GoalNet.GetParticle(pIdx)).SetPosition(Position + m_dDeltaT * Vel);
 		//Update Velocity
 		Vector3d deltaVel = Force / Mass * m_dDeltaT;
+		//Vector3d deltaVel = (m_GoalNet.GetParticle(pIdx)).GetAcceleration() * m_dDeltaT;
 		(m_GoalNet.GetParticle(pIdx)).SetVelocity(Vel + deltaVel);
 	}
 
@@ -654,8 +662,10 @@ void CMassSpringSystem::ExplicitEuler()
 void CMassSpringSystem::RungeKutta()
 {
     //TO DO 7
-    BallNetCollision();
-    BallToBallCollision();
+	ComputeAllForce();
+	HandleCollision();
+    //BallNetCollision();
+    //BallToBallCollision();
     ParticleRungeKutta();
     BallRungeKutta();
 }
@@ -672,8 +682,65 @@ void CMassSpringSystem::ParticleRungeKutta()
     //container to store k1~k4 for each particles
     vector<Vector3d> curPosCntr, curVelCntr;
     vector<StateStep> k1StepCntr, k2StepCntr, k3StepCntr, k4StepCntr;
+
+	//m_GoalNet.AddForceField(m_ForceField);
     
-   
+	curPosCntr.reserve(m_GoalNet.ParticleNum());
+	curVelCntr.reserve(m_GoalNet.ParticleNum());
+	k1StepCntr.reserve(m_GoalNet.ParticleNum());
+	k2StepCntr.reserve(m_GoalNet.ParticleNum());
+	k3StepCntr.reserve(m_GoalNet.ParticleNum());
+	k4StepCntr.reserve(m_GoalNet.ParticleNum());
+
+	StateStep storage;
+
+	for (int pIdx = 0; pIdx < m_GoalNet.ParticleNum(); ++pIdx)
+	{
+		Vector3d Pos = (m_GoalNet.GetParticle(pIdx)).GetPosition();
+		Vector3d Vel = (m_GoalNet.GetParticle(pIdx)).GetVelocity();
+		Vector3d Acceleratation = (m_GoalNet.GetParticle(pIdx)).GetAcceleration();
+		//std::cout << Acceleratation << endl;
+
+		curPosCntr.push_back(Pos);
+		curVelCntr.push_back(Vel);
+		//k1
+		storage.deltaVel = 0;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k1StepCntr.push_back(storage);
+		//k2
+		storage.deltaVel = Acceleratation * m_dDeltaT / 2;
+		Vel = Vel + storage.deltaVel;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k2StepCntr.push_back(storage);
+		//k3
+		storage.deltaVel = Acceleratation * m_dDeltaT / 2;
+		Vel = Vel + storage.deltaVel;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k3StepCntr.push_back(storage);
+		//k4
+		storage.deltaVel = Acceleratation * m_dDeltaT;
+		Vel = Vel + storage.deltaVel;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k4StepCntr.push_back(storage);	
+		//Update
+		(m_GoalNet.GetParticle(pIdx)).SetPosition(curPosCntr[pIdx] \
+			+ (1.0 / 6.0) \
+			* (k1StepCntr[pIdx].deltaPos + 2.0 * k2StepCntr[pIdx].deltaPos \
+			+ 2.0 * k3StepCntr[pIdx].deltaPos + k4StepCntr[pIdx].deltaPos));
+
+		(m_GoalNet.GetParticle(pIdx)).SetVelocity((m_GoalNet.GetParticle(pIdx)).GetVelocity() + m_dDeltaT * Acceleratation);
+	}
+	
+	//Update
+
+	/*for (int pIdx = 0; pIdx < m_GoalNet.ParticleNum(); ++pIdx)
+	{
+		m_GoalNet.GetParticle(pIdx).SetPosition(curPosCntr[pIdx] \
+												+ (1/6) \
+												* (k1StepCntr[pIdx].deltaPos + 2*k2StepCntr[pIdx].deltaPos \
+												+ 2*k3StepCntr[pIdx].deltaPos + k4StepCntr[pIdx].deltaPos));
+		
+	}*/
 }
 
 void CMassSpringSystem::BallRungeKutta()
