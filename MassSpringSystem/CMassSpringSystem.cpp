@@ -756,6 +756,51 @@ void CMassSpringSystem::BallRungeKutta()
     vector<Vector3d> curPosCntr, curVelCntr;
     vector<StateStep> k1StepCntr, k2StepCntr, k3StepCntr, k4StepCntr;
 
+	curPosCntr.reserve(m_GoalNet.ParticleNum());
+	curVelCntr.reserve(m_GoalNet.ParticleNum());
+	k1StepCntr.reserve(m_GoalNet.ParticleNum());
+	k2StepCntr.reserve(m_GoalNet.ParticleNum());
+	k3StepCntr.reserve(m_GoalNet.ParticleNum());
+	k4StepCntr.reserve(m_GoalNet.ParticleNum());
+
+	StateStep storage;
+
+	for (int ballIdx = 0; ballIdx < BallNum(); ++ballIdx)
+	{
+		Vector3d Pos = m_Balls[ballIdx].GetPosition();
+		Vector3d Vel = m_Balls[ballIdx].GetVelocity();
+		Vector3d Acceleratation = m_Balls[ballIdx].GetAcceleration();
+
+		curPosCntr.push_back(Pos);
+		curVelCntr.push_back(Vel);
+		//k1
+		storage.deltaVel = 0;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k1StepCntr.push_back(storage);
+		//k2
+		storage.deltaVel = Acceleratation * m_dDeltaT / 2;
+		Vel = Vel + storage.deltaVel;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k2StepCntr.push_back(storage);
+		//k3
+		storage.deltaVel = Acceleratation * m_dDeltaT / 2;
+		Vel = Vel + storage.deltaVel;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k3StepCntr.push_back(storage);
+		//k4
+		storage.deltaVel = Acceleratation * m_dDeltaT;
+		Vel = Vel + storage.deltaVel;
+		storage.deltaPos = Vel * m_dDeltaT;
+		k4StepCntr.push_back(storage);
+		//Update
+		m_Balls[ballIdx].SetPosition(curPosCntr[ballIdx] \
+			+ (1.0 / 6.0) \
+			* (k1StepCntr[ballIdx].deltaPos + 2.0 * k2StepCntr[ballIdx].deltaPos \
+			+ 2.0 * k3StepCntr[ballIdx].deltaPos + k4StepCntr[ballIdx].deltaPos));
+
+		m_Balls[ballIdx].SetVelocity(m_Balls[ballIdx].GetVelocity() + m_dDeltaT * Acceleratation);
+	}
+
 }
 
 void CMassSpringSystem::ResetContactForce()
