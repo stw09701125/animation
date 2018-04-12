@@ -501,7 +501,7 @@ void CMassSpringSystem::BallPlaneCollision()
 {
     //TO DO 2
     static const double eEPSILON = 0.01;
-    double resistCoef = 0.4;
+    double resistCoef = 0.3;
     double frictionCoef = 0.3;
 	Vector3d normalF(0.0, 1.0, 0.0);
 	Vector3d zero(0.0, -0.75, 0.0);
@@ -531,7 +531,7 @@ void CMassSpringSystem::BallPlaneCollision()
 
 void CMassSpringSystem::BallToBallCollision()
 {
-    static const double eEPSILON = 0.01;
+    static const double eEPSILON = 0.08;
 	//TO DO 2
 	for (int ballAIdx = 0; ballAIdx < BallNum(); ++ballAIdx)
 	{
@@ -563,7 +563,7 @@ void CMassSpringSystem::BallToBallCollision()
 
 void CMassSpringSystem::BallNetCollision()
 {
-    static const double eEPSILON = 0.01;
+    static const double eEPSILON = 0.05;
 	const double bMass = 1.0f;
 	const double pMass = m_GoalNet.GetParticle(0).GetMass();
 	//TO DO 2
@@ -577,7 +577,11 @@ void CMassSpringSystem::BallNetCollision()
 			if (collidePlane.SquaredLength() < (eEPSILON + 0.3) * (eEPSILON + 0.3))
 			{
 				Vector3d bVel = m_Balls[ballIdx].GetVelocity();
-				if (m_GoalNet.GetParticle(pIdx).IsMovable())
+				if (!m_GoalNet.GetParticle(pIdx).IsMovable())
+				{
+					m_Balls[ballIdx].SetVelocity(-1.05 * bVel);
+				}
+				else
 				{
 					Vector3d pVel = (m_GoalNet.GetParticle(pIdx)).GetVelocity();
 					collidePlane /= collidePlane.Length();
@@ -586,10 +590,6 @@ void CMassSpringSystem::BallNetCollision()
 					Vector3d partV = pVel.DotProduct(collidePlane) * collidePlane;
 					m_Balls[ballIdx].SetVelocity((ballV * (bMass - pMass) + 2 * pMass * partV) / (bMass + pMass) + (bVel - ballV));
 					m_GoalNet.GetParticle(pIdx).SetVelocity((partV * (pMass - bMass) + 2 * bMass * ballV) / (bMass + pMass) + (pVel - partV));
-				}
-				else
-				{
-					m_Balls[ballIdx].SetVelocity(-bVel);
 				}
 			}
 		}
