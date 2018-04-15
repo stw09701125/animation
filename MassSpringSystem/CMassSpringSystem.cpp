@@ -664,8 +664,6 @@ void CMassSpringSystem::RungeKutta()
     //TO DO 7
 	ComputeAllForce();
 	HandleCollision();
-    //BallNetCollision();
-    //BallToBallCollision();
     ParticleRungeKutta();
     BallRungeKutta();
 }
@@ -730,17 +728,6 @@ void CMassSpringSystem::ParticleRungeKutta()
 
 		(m_GoalNet.GetParticle(pIdx)).SetVelocity((m_GoalNet.GetParticle(pIdx)).GetVelocity() + m_dDeltaT * Acceleratation);
 	}
-	
-	//Update
-
-	/*for (int pIdx = 0; pIdx < m_GoalNet.ParticleNum(); ++pIdx)
-	{
-		m_GoalNet.GetParticle(pIdx).SetPosition(curPosCntr[pIdx] \
-												+ (1/6) \
-												* (k1StepCntr[pIdx].deltaPos + 2*k2StepCntr[pIdx].deltaPos \
-												+ 2*k3StepCntr[pIdx].deltaPos + k4StepCntr[pIdx].deltaPos));
-		
-	}*/
 }
 
 void CMassSpringSystem::BallRungeKutta()

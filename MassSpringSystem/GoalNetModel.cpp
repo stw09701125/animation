@@ -305,10 +305,6 @@ void GoalNet::InitializeParticle()
 
 void GoalNet::InitializeSpring()
 {
-    //int startParticleId = 0;
-    //int endParticleId = 0;
-	
-	//createSpring<CSpring::enType_t::Type_nBending>();
 // TO DO 1
 
 	createSpring<CSpring::enType_t::Type_nStruct>();
@@ -532,15 +528,6 @@ void GoalNet::createSpringP<GoalNet::Plane::XY>(
 			addStructSpring(pidS, pid2);
 			addStructSpring(pidE, pid3);
 			addStructSpring(pidE, pid4);
-
-			/*CSpring Spring1(pidS, pid1, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			CSpring Spring2(pidS, pid2, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			CSpring Spring3(pidE, pid3, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			CSpring Spring4(pidE, pid4, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			m_Springs.push_back(Spring1);
-			m_Springs.push_back(Spring2);
-			m_Springs.push_back(Spring3);
-			m_Springs.push_back(Spring4);*/
 		}
 	}			
 }
@@ -567,15 +554,6 @@ void GoalNet::createSpringP<GoalNet::Plane::YZ>(
 			addStructSpring(pidS, pid2);
 			addStructSpring(pidE, pid3);
 			addStructSpring(pidE, pid4);
-
-			/*CSpring Spring1(pidS, pid1, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			CSpring Spring2(pidS, pid2, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			CSpring Spring3(pidE, pid3, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			CSpring Spring4(pidE, pid4, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			m_Springs.push_back(Spring1);
-			m_Springs.push_back(Spring2);
-			m_Springs.push_back(Spring3);
-			m_Springs.push_back(Spring4);*/
 		}
 	}
 }
@@ -597,11 +575,6 @@ void GoalNet::createSpringP<GoalNet::Plane::XZ>(
 
 			addStructSpring(pid, pid1);
 			addStructSpring(pid, pid2);
-
-			/*CSpring Spring1(pid, pid1, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			CSpring Spring2(pid, pid2, 5, m_dSpringCoefStruct, m_dDamperCoefStruct, m_ColorStruct, type);
-			m_Springs.push_back(Spring1);
-			m_Springs.push_back(Spring2);*/
 		}
 	}
 }
